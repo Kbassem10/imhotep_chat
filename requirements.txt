@@ -1,0 +1,24 @@
+# Django and core dependencies
+Django==5.2.0
+psycopg2-binary==2.9.9
+python-decouple==3.8
+Pillow==11.2.1
+weasyprint==65.1
+reportlab==4.0.9
+channels
+daphne
+jwt
+requests
+
+# Authentication
+django-allauth==65.7.0
+
+# Production
+gunicorn==23.0.0
+whitenoise==6.6.0
+
+# Security
+django-cors-headers==4.3.1
+
+# Performance
+django-storages==1.14.2  # If using cloud storage for media
