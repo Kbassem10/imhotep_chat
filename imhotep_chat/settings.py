@@ -90,7 +90,11 @@ ROOT_URLCONF = 'imhotep_chat.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),
+            os.path.join(BASE_DIR,'chat','templates'),
+            os.path.join(BASE_DIR, 'chat/auth','templates'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -1,5 +1,5 @@
 from django.urls import path, include
-from . import auth
+from .auth import auth
 from . import user_profile, views  # Make sure to add this import
 from django.views.generic import TemplateView
 

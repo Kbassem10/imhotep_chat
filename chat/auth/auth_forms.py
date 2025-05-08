@@ -1,5 +1,5 @@
 from django import forms
-from .models import User
+from ..models import User
 
 class RegistrationForm(forms.Form):
     username = forms.CharField(max_length=150, required=True)
