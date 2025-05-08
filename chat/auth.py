@@ -18,7 +18,7 @@ import requests
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from imhotep_chat.settings import SITE_DOMAIN
-from .forms import RegistrationForm
+from .auth_forms import RegistrationForm, LoginForm
 
 #the register route
 def register(request):
@@ -41,8 +41,7 @@ def register(request):
                 username=username,
                 email=email,
                 password=password,
-                email_verify=False, # Will be set to True after email confirmation
-                user_type=user_type,
+                email_verify=False,
                 first_name=first_name,
                 last_name=last_name
             )
@@ -101,15 +100,18 @@ def activate(request, uidb64, token):
 def user_login(request):
 
     if request.user.is_authenticated:
-        if request.user.is_doctor():
-            return redirect("doctor_dashboard")
-        
-        if request.user.is_assistant():
-            return redirect("assistant_dashboard")
+        return redirect("main_menu")
 
     if request.method == "POST":
-        user_username_mail = request.POST.get('user_username_mail')
-        password = request.POST.get('password')
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user_username_mail = form.cleaned_data.get('user_username_mail')
+            password = form.cleaned_data.get('password')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.replace('_', ' ').capitalize()}: {error}")
+            return render(request, "register.html", {'form': form})
 
         # Check if the input is a username or email
         if '@' not in user_username_mail:
@@ -120,14 +122,8 @@ def user_login(request):
                     login(request, user)
                     messages.success(request, "Login successful!")
 
-                    if request.user.is_doctor():
-                        return redirect("doctor_dashboard")
-                    
-                    if request.user.is_assistant():
-                        return redirect("assistant_dashboard")
-                    
-                    if request.user.is_patient():
-                        return redirect("patient.dashboard")
+                    return redirect("main_menu")
+
                 else:
                     # Send verification email
                     mail_subject = 'Activate your account.'
@@ -155,11 +151,7 @@ def user_login(request):
                     if user.email_verify == True:
                         login(request, user)
                         messages.success(request, "Login successful!")
-                        if request.user.is_doctor():
-                            return redirect("doctor_dashboard")
-                        
-                        if request.user.is_assistant():
-                            return redirect("assistant_dashboard")
+                        return redirect("main_menu")
 
                     else:
                         # Send verification email

@@ -34,3 +34,12 @@ class RegistrationForm(forms.Form):
             self.add_error('confirm_password', "Passwords do not match.")
             
         return cleaned_data
+
+class LoginForm(forms.Form):
+    user_username_mail = forms.CharField(max_length=150, required=True)
+    password = forms.CharField(widget=forms.PasswordInput(), required=True)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        return cleaned_data
