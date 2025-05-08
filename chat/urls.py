@@ -2,6 +2,7 @@ from django.urls import path, include
 from .auth import auth
 from . import user_profile, views  # Make sure to add this import
 from django.views.generic import TemplateView
+from .views import LongPollingView
 
 urlpatterns = [
     # #the main url
@@ -25,6 +26,8 @@ urlpatterns = [
     path('google/login/', auth.google_login, name='google_login'),
     path('google/callback/', auth.google_callback, name='google_callback'),
     path('google/handle-username/', auth.add_username_google_login, name='add_username_google_login'),
+
+    path('websocket-test/', TemplateView.as_view(template_name='websocket_test.html'), name='websocket_test'),
 
     # Add this to your urlpatterns list
     # path('update-profile/', user_profile.update_profile, name='update_profile'),
