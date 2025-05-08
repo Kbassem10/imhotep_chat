@@ -43,3 +43,19 @@ class LoginForm(forms.Form):
         cleaned_data = super().clean()
         
         return cleaned_data
+
+class AddUsernameForm(forms.Form):
+    username = forms.CharField(max_length=150, required=True)
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if '@' in username:
+            raise forms.ValidationError("Username cannot contain '@'.")
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError("Username already taken, please choose another one!")
+        return username
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        return cleaned_data

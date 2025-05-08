@@ -25,7 +25,6 @@ urlpatterns = [
     path('google/login/', auth.google_login, name='google_login'),
     path('google/callback/', auth.google_callback, name='google_callback'),
     path('google/handle-username/', auth.add_username_google_login, name='add_username_google_login'),
-    path('google/handle-details/', auth.add_details_google_login, name='add_details_google_login'),
 
     # Add this to your urlpatterns list
     # path('update-profile/', user_profile.update_profile, name='update_profile'),
