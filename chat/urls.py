@@ -1,8 +1,7 @@
 from django.urls import path, include
 from .auth import auth
-from . import user_profile, views  # Make sure to add this import
+from . import user_profile, views
 from django.views.generic import TemplateView
-from .views import LongPollingView
 
 urlpatterns = [
     # #the main url

@@ -51,7 +51,7 @@ if DEBUG == False:
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne', # Moved daphne to the top as per its requirement
+    'daphne', # Moved daphne to the top as per its requirement because it's for webhooks
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -63,7 +63,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'channels',
+    'channels', # Moved daphne to the top as per its requirement because it's for webhooks
 ]
 
 #added those to the Google login and sending emails
