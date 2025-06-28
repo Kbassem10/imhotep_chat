@@ -82,6 +82,12 @@
         {% block extra_head %}{% endblock %}
     </head>
 <body class="bg-gray-100">
+    <!-- Navigation Bar -->
+
+    {% if user.is_authenticated %}
+        {% include "navbar.html" %}
+    {% endif %}
+
     <div class="flex min-h-screen">
         
         <!-- Main Content -->

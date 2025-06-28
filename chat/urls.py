@@ -1,11 +1,12 @@
 from django.urls import path, include
 from .auth import auth
-from . import user_profile, views
+from . import user_profile, views, user
 from django.views.generic import TemplateView
 
 urlpatterns = [
-    # #the main url
+    # #the landing page URL
     # path("", views.landing_page, name="landing_page"),
+
     #the register url
     path("register/", auth.register, name="register"),
     #login url
@@ -22,12 +23,17 @@ urlpatterns = [
     path('reset/<uidb64>/<token>/', auth.CustomPasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('reset/done/', auth.CustomPasswordResetCompleteView.as_view(), name='password_reset_complete'),
 
+    #URLs for google login
     path('google/login/', auth.google_login, name='google_login'),
     path('google/callback/', auth.google_callback, name='google_callback'),
     path('google/handle-username/', auth.add_username_google_login, name='add_username_google_login'),
 
+    #Test URL for the websockets
     path('websocket-test/', TemplateView.as_view(template_name='websocket_test.html'), name='websocket_test'),
 
+    #Main Page URL
+    path('main-menu/', user.main, name='main_menu'),
+    
     # Add this to your urlpatterns list
     # path('update-profile/', user_profile.update_profile, name='update_profile'),
     # path('password_change/', user_profile.CustomPasswordChangeView.as_view(), name='password_change'),
@@ -35,6 +41,6 @@ urlpatterns = [
     # path('activate-profile-update/<str:uidb64>/<str:token>/<str:new_email>/', user_profile.activate_profile_update, name='activate_profile_update'),
 
     # Terms and Privacy pages
-    # path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
-    # path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
+    path('terms/', TemplateView.as_view(template_name='terms.html'), name='terms'),
+    path('privacy/', TemplateView.as_view(template_name='privacy.html'), name='privacy'),
 ]

@@ -1,3 +1,59 @@
+// Main JavaScript functionality for Imhotep Chat
+
+// Toggle password visibility
+function togglePasswordVisibility(fieldId) {
+    const field = document.getElementById(fieldId);
+    const button = field.nextElementSibling;
+    
+    if (field.type === 'password') {
+        field.type = 'text';
+    } else {
+        field.type = 'password';
+    }
+}
+
+// Show/hide loading overlay
+function showLoading() {
+    document.getElementById('loading-overlay').style.display = 'flex';
+}
+
+function hideLoading() {
+    document.getElementById('loading-overlay').style.display = 'none';
+}
+
+// Auto-hide messages after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    const messages = document.querySelectorAll('[class*="bg-green-100"], [class*="bg-red-100"], [class*="bg-blue-100"]');
+    messages.forEach(message => {
+        setTimeout(() => {
+            message.style.opacity = '0';
+            setTimeout(() => {
+                message.remove();
+            }, 300);
+        }, 5000);
+    });
+});
+
+// Validate password on registration
+function validatePassword() {
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    
+    if (password && confirmPassword) {
+        if (password.value !== confirmPassword.value) {
+            alert('Passwords do not match!');
+            return false;
+        }
+        
+        if (password.value.length < 8) {
+            alert('Password must be at least 8 characters long!');
+            return false;
+        }
+    }
+    
+    return true;
+}
+
 // Simplified global function for sidebar toggle that will work with onclick
 function handleSidebarToggle() {
     const sidebar = document.getElementById('sideNav');
@@ -18,35 +74,6 @@ function handleSidebarToggle() {
 
 // Make sure the function is globally available
 window.handleSidebarToggle = handleSidebarToggle;
-
-// Toggle password visibility
-function togglePasswordVisibility(inputId) {
-    const input = document.getElementById(inputId);
-    if (input.type === "password") {
-        input.type = "text";
-    } else {
-        input.type = "password";
-    }
-}
-
-// Password validation
-function validatePassword() {
-    const password = document.getElementById("password").value;
-    const confirmPassword = document.getElementById("confirm_password").value;
-    
-    if (password !== confirmPassword) {
-        alert("Passwords do not match!");
-        return false;
-    }
-    
-    // Add additional validation rules if needed
-    if (password.length < 8) {
-        alert("Password must be at least 8 characters long!");
-        return false;
-    }
-    
-    return true;
-}
 
 // Form submission handling
 document.addEventListener('submit', function(e) {
