@@ -39,9 +39,9 @@ class Message(models.Model):
     """
 
     STATUS = (
-        ('Seen', 'Seen'),
+        ('Pending', 'Pending'),
         ('Delivered', 'Delivered'),
-        ('Pending', 'Pending')
+        ('Seen', 'Seen')
     )
 
     sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_messages')
@@ -49,9 +49,24 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=10, choices=STATUS, default='Pending')
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    seen_at = models.DateTimeField(null=True, blank=True)
+    seen_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='seen_messages', blank=True)
 
     def __str__(self):
         return f"Message from {self.sender.username} in room {self.room.id} at {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
 
     class Meta:
         ordering = ['timestamp']
+
+class RoomPresence(models.Model):
+    """
+    Tracks which users are currently active in which rooms
+    """
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    room = models.ForeignKey(ChatRoom, on_delete=models.CASCADE)
+    is_online = models.BooleanField(default=True)
+    last_seen = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('user', 'room')

@@ -19,4 +19,3 @@ def get_user_latest_chat_rooms(user_id):
     except User.DoesNotExist:
         return None
 
-
