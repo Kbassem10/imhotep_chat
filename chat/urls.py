@@ -33,7 +33,19 @@ urlpatterns = [
 
     #Main Page URL
     path('main-menu/', user.main, name='main_menu'),
-    
+
+    #Chat-related URLs
+    path('start-chat/', user.start_chat, name='start_chat'),
+    path('get-messages/<int:chat_room_id>/', user.get_messages, name='get_messages'),
+
+    #add new friend URL
+    path('add-friend/', user.add_friend, name='add_friend'),
+
+    path('search-user/', user.search_user, name='search_user'),
+    path('accept-friend-request/', user.accept_friend_request, name='accept_friend_request'),
+    path('get-friends/', user.get_friends, name='get_friends'),
+    path('get-friend-requests/', user.get_friend_requests, name='get_friend_requests'),
+
     # Add this to your urlpatterns list
     # path('update-profile/', user_profile.update_profile, name='update_profile'),
     # path('password_change/', user_profile.CustomPasswordChangeView.as_view(), name='password_change'),

@@ -104,6 +104,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                             'type': 'chat_message',
                             'message': message,
                             'username': self.user.username,
+                            'user_id': self.user.id,
                             'message_id': saved_message.id,
                             'timestamp': datetime.now().isoformat(),
                             'status': 'Delivered'
@@ -149,6 +150,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 'type': 'message',
                 'message': event['message'],
                 'username': event['username'],
+                'user_id': event['user_id'],
                 'timestamp': event['timestamp']
             }))
 
@@ -208,6 +210,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
         try:
             # Get the chat room by ID
             room = ChatRoom.objects.get(id=self.room_id)
+            
+            # Verify user is a participant
+            if not room.participants.filter(id=self.user.id).exists():
+                return None
             
             message = Message.objects.create(
                 sender=self.user,
