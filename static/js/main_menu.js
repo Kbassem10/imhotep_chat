@@ -1,3 +1,20 @@
+// Utility function to get CSRF cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 // Chat functionality variables
 let currentChatId = null;
 let messageSocket = null;
@@ -189,21 +206,39 @@ function displayFriends(friends) {
     
     friends.forEach(friend => {
         const friendElement = document.createElement('div');
-        friendElement.className = 'flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg';
+        friendElement.className = 'flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg border-b border-gray-100';
+        
+        const isBlocked = friend.status === 'Blocked';
+        const blockButtonText = isBlocked ? 'Unblock' : 'Block';
+        const blockButtonClass = isBlocked ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600';
+        
         friendElement.innerHTML = `
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                <div class="w-10 h-10 ${isBlocked ? 'bg-gray-500' : 'bg-blue-500'} rounded-full flex items-center justify-center">
                     <span class="text-white font-medium">${friend.name.charAt(0).toUpperCase()}</span>
                 </div>
                 <div>
-                    <p class="font-medium text-gray-900">${friend.name}</p>
+                    <p class="font-medium text-gray-900 ${isBlocked ? 'opacity-50' : ''}">${friend.name}</p>
                     <p class="text-sm text-gray-500">${friend.email}</p>
+                    ${isBlocked ? '<p class="text-xs text-red-500">Blocked</p>' : ''}
                 </div>
             </div>
-            <button onclick="startChatWithFriend(${friend.id}, '${friend.name}')" 
-                    class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
-                Chat
-            </button>
+            <div class="flex space-x-2">
+                ${!isBlocked ? `
+                    <button onclick="startChatWithFriend(${friend.id}, '${friend.name}')" 
+                            class="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600">
+                        Chat
+                    </button>
+                ` : ''}
+                <button onclick="blockFriend(${friend.friendship_id}, '${friend.name}', '${friend.status}')" 
+                        class="px-3 py-1 ${blockButtonClass} text-white text-sm rounded">
+                    ${blockButtonText}
+                </button>
+                <button onclick="removeFriend(${friend.friendship_id}, '${friend.name}')" 
+                        class="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600">
+                    Remove
+                </button>
+            </div>
         `;
         friendsList.appendChild(friendElement);
     });
@@ -445,20 +480,68 @@ function addFriend(friendId, friendName) {
     });
 }
 
-// Function to get CSRF token from cookies
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
+// Block/Unblock friend function
+function blockFriend(friendshipId, friendName, currentStatus) {
+    const action = currentStatus === 'Blocked' ? 'unblock' : 'block';
+    
+    if (!confirm(`Are you sure you want to ${action} ${friendName}?`)) {
+        return;
     }
-    return cookieValue;
+    
+    fetch('/block-friend/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            friendship_id: friendshipId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showNotification(data.message, 'success');
+            loadFriends(); // Refresh friends list
+        } else {
+            showNotification(data.error || `Failed to ${action} friend`, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    });
+}
+
+// Remove friend function
+function removeFriend(friendshipId, friendName) {
+    if (!confirm(`Are you sure you want to remove ${friendName} from your friends? This action cannot be undone.`)) {
+        return;
+    }
+    
+    fetch('/remove-friend/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            friendship_id: friendshipId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showNotification(data.message, 'success');
+            loadFriends(); // Refresh friends list
+        } else {
+            showNotification(data.error || 'Failed to remove friend', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred', 'error');
+    });
 }
 
 // Start new chat (automatically creates ChatRoom if they're friends)
@@ -701,3 +784,5 @@ window.declineFriendRequest = declineFriendRequest;
 window.startChatWithFriend = startChatWithFriend;
 window.addFriend = addFriend;
 window.startChat = startChat;
+window.blockFriend = blockFriend;
+window.removeFriend = removeFriend;

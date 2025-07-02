@@ -1,6 +1,6 @@
 from django.urls import path, include
 from .auth import auth
-from . import user_profile, views, user
+from . import messages, user_profile, views, friends
 from django.views.generic import TemplateView
 
 urlpatterns = [
@@ -32,19 +32,20 @@ urlpatterns = [
     path('websocket-test/', TemplateView.as_view(template_name='websocket_test.html'), name='websocket_test'),
 
     #Main Page URL
-    path('main-menu/', user.main, name='main_menu'),
+    path('main-menu/', messages.main, name='main_menu'),
 
     #Chat-related URLs
-    path('start-chat/', user.start_chat, name='start_chat'),
-    path('get-messages/<int:chat_room_id>/', user.get_messages, name='get_messages'),
+    path('start-chat/', messages.start_chat, name='start_chat'),
+    path('get-messages/<int:chat_room_id>/', messages.get_messages, name='get_messages'),
 
     #add new friend URL
-    path('add-friend/', user.add_friend, name='add_friend'),
-
-    path('search-user/', user.search_user, name='search_user'),
-    path('accept-friend-request/', user.accept_friend_request, name='accept_friend_request'),
-    path('get-friends/', user.get_friends, name='get_friends'),
-    path('get-friend-requests/', user.get_friend_requests, name='get_friend_requests'),
+    path('add-friend/', friends.add_friend, name='add_friend'),
+    path('search-user/', friends.search_user, name='search_user'),
+    path('accept-friend-request/', friends.accept_friend_request, name='accept_friend_request'),
+    path('get-friends/', friends.get_friends, name='get_friends'),
+    path('get-friend-requests/', friends.get_friend_requests, name='get_friend_requests'),
+    path('block-friend/', friends.block_friend, name='block_friend'),
+    path('remove-friend/', friends.remove_friend, name='remove_friend'),
 
     # Add this to your urlpatterns list
     # path('update-profile/', user_profile.update_profile, name='update_profile'),
