@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
-from .models import User, Friendship, ChatRoom, Message
+from ..models import User, Friendship, ChatRoom, Message
 from django.contrib.auth.decorators import login_required
-from .utils.user_info import get_user_photo
-from .utils.get_user_latest_chat_rooms import get_user_latest_chat_rooms
+from ..utils.user_info import get_user_photo
+from ..utils.get_user_latest_chat_rooms import get_user_latest_chat_rooms
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -19,9 +19,53 @@ def search_user(request):
         if not user_name:
             return JsonResponse({'error': 'Name is required!'}, status=400)
 
-        users = User.objects.filter(username__icontains = user_name)
+        #get all users matching the search not with the current user
+        users = User.objects.filter(
+            username__icontains=user_name
+        ).exclude(id=request.user.id)
 
-        users_list = [{'id': user.id, 'name': user.username, 'email':user.email} for user in users]
+        #get all friendships for the current user
+        friendships = Friendship.objects.filter(
+            Q(requester=request.user) | Q(addressee=request.user)
+        )
+
+        #create a dictionary to store friendship status for each user
+        friendship_status = {}
+        for friendship in friendships:
+            if friendship.requester == request.user:
+                friend_id = friendship.addressee.id
+            else:
+                friend_id = friendship.requester.id
+            friendship_status[friend_id] = friendship.status
+
+        # Categorize users by friendship status to sort them
+        accepted_friends = []
+        pending_friends = []
+        blocked_friends = []
+        other_users = []
+
+        for user in users:
+            #save each user data
+            user_data = {
+                'id': user.id, 
+                'name': user.username, 
+                'email': user.email,
+                'friendship_status': friendship_status.get(user.id, 'none')
+            }
+            
+            #categorize them to sort them
+            status = friendship_status.get(user.id, 'none')
+            if status == 'accepted':
+                accepted_friends.append(user_data)
+            elif status == 'pending':
+                pending_friends.append(user_data)
+            elif status == 'blocked':
+                blocked_friends.append(user_data)
+            else:
+                other_users.append(user_data)
+
+        #combine all users in the desired order
+        users_list = accepted_friends + pending_friends + blocked_friends + other_users
 
         return JsonResponse({'users': users_list}, status=200)
     
@@ -122,44 +166,87 @@ def accept_friend_request(request):
 @login_required
 def get_friends(request):
     """Get user's friends list with friendship details"""
-    friendships = Friendship.objects.filter(
-        Q(requester=request.user) | Q(addressee=request.user),
-        status__in=['accepted', 'Blocked']
-    )
-    
-    friends_list = []
-    for friendship in friendships:
-        # Get the other user (friend)
-        friend = friendship.addressee if friendship.requester == request.user else friendship.requester
-        friends_list.append({
-            'id': friend.id,
-            'name': friend.username,
-            'email': friend.email,
-            'photo_path': friend.user_photo_path,
-            'friendship_id': friendship.id,
-            'status': friendship.status
-        })
-    
-    return JsonResponse({'friends': friends_list}, status=200)
+    try:
+        friendships = Friendship.objects.filter(
+            Q(requester=request.user) | Q(addressee=request.user),
+            status__in=['accepted', 'Blocked']
+        )
+        
+        friends_list = []
+        for friendship in friendships:
+            # Get the other user (friend)
+            friend = friendship.addressee if friendship.requester == request.user else friendship.requester
+            friends_list.append({
+                'id': friend.id,
+                'name': friend.username,
+                'email': friend.email,
+                'photo_path': getattr(friend, 'user_photo_path', ''),
+                'friendship_id': friendship.id,
+                'status': friendship.status
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'friends': friends_list
+        }, status=200)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
 
 @login_required
 def get_friend_requests(request):
     """Get pending friend requests"""
     pending_requests = Friendship.get_pending_requests(request.user)
-    requests_list = [
-        {
-            'id': req.id,
-            'requester': {
-                'id': req.requester.id,
-                'name': req.requester.username,
-                'email': req.requester.email
-            },
-            'created_at': req.created_at.isoformat()
-        }
-        for req in pending_requests
-    ]
+    requests_list = []
     
-    return JsonResponse({'friend_requests': requests_list}, status=200)
+    for req in pending_requests:
+        requests_list.append({
+            'id': req.id,
+            'username': req.requester.username,
+            'user_photo_path': getattr(req.requester, 'user_photo_path', ''),
+            'created_at': req.created_at.isoformat(),
+            'friendship_id': req.id
+        })
+    
+    return JsonResponse({
+        'success': True,
+        'requests': requests_list,
+        'friend_requests': requests_list  # Keep both formats for compatibility
+    }, status=200)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def decline_friend_request(request):
+    try:
+        data = json.loads(request.body)
+        friendship_id = data.get('friendship_id')
+        
+        if not friendship_id:
+            return JsonResponse({'error': 'Friendship ID is required'}, status=400)
+        
+        try:
+            friendship = Friendship.objects.get(
+                id=friendship_id,
+                addressee=request.user,
+                status='pending'
+            )
+        except Friendship.DoesNotExist:
+            return JsonResponse({'error': 'Friend request not found'}, status=404)
+        
+        # Delete the friendship request
+        requester_name = friendship.requester.username
+        friendship.delete()
+        
+        return JsonResponse({
+            'message': f'Friend request from {requester_name} declined',
+        }, status=200)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 @csrf_exempt
 @require_http_methods(["POST"])
@@ -242,45 +329,6 @@ def remove_friend(request):
             }
         }, status=200)
         
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def search_friend(request):
-    try:
-        data = json.loads(request.body)
-        user_name = data.get('name', '')
-
-        if not user_name:
-            return JsonResponse({'error': 'Name is required!'}, status=400)
-
-        # Get accepted friendships for the current user
-        friendships = Friendship.objects.filter(
-            Q(requester=request.user) | Q(addressee=request.user),
-            status__in=['accepted', 'Blocked']
-        )
-        
-        # Extract friend user IDs
-        friend_ids = []
-        for friendship in friendships:
-            if friendship.requester == request.user:
-                friend_ids.append(friendship.addressee.id)
-            else:
-                friend_ids.append(friendship.requester.id)
-        
-        # Filter users by name and only include existing friends
-        users = User.objects.filter(
-            username__icontains=user_name,
-            id__in=friend_ids
-        )
-
-        users_list = [{'id': user.id, 'name': user.username, 'email': user.email} for user in users]
-
-        return JsonResponse({'users': users_list}, status=200)
-    
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:

@@ -54,8 +54,15 @@
 
 /* Touch-friendly buttons */
 button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-height: 44px;
-  min-width: 44px;
+  position: relative;
+}
+
+button svg {
+  flex-shrink: 0;
 }
 
 /* Smooth animations */
@@ -103,17 +110,31 @@ button {
 
 /* Loading spinner */
 .loading-spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
   width: 40px;
   height: 40px;
+  border: 4px solid #f3f4f6;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Loading overlay fixes */
+#loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
 }
 
 /* Modal animations */
@@ -132,14 +153,213 @@ button {
   }
 }
 
-/* Touch feedback */
-.active\:bg-gray-100:active {
-  background-color: #f3f4f6;
+/* Button alignment fixes */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  position: relative;
 }
 
-/* Status indicators */
-.online-indicator {
-  box-shadow: 0 0 0 2px white;
+button svg {
+  flex-shrink: 0;
+}
+
+/* Centered icons and text in buttons */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+/* Modal improvements */
+.modal-backdrop {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Responsive modal sizing */
+.modal-container {
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 640px) {
+  .modal-container {
+    max-width: 32rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal-container {
+    max-width: 42rem;
+  }
+}
+
+/* Friends modal specific styles */
+.friends-modal-container {
+  max-width: 95vw;
+  max-height: 90vh;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .friends-modal-container {
+    max-width: 36rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .friends-modal-container {
+    max-width: 44rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .friends-modal-container {
+    max-width: 56rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .friends-modal-container {
+    max-width: 64rem;
+  }
+}
+
+/* Pagination styles */
+.pagination-button {
+  min-width: 40px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.pagination-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dropdown menu improvements */
+.dropdown-menu {
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Notification improvements */
+.notification {
+  animation: slideInNotification 0.3s ease-out;
+  max-width: 320px;
+  word-wrap: break-word;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes slideInNotification {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Chat interface improvements */
+.chat-header {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+}
+
+.message-input-container {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(229, 231, 235, 0.8);
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 1023px) {
+  .friends-modal-container {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+  
+  .modal-container {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+  }
+}
+
+/* Touch feedback */
+@media (hover: none) and (pointer: coarse) {
+  button:active {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  
+  .chat-item:active {
+    transform: scale(0.99);
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* Focus states for accessibility */
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Improved search input styling */
+.search-input {
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
+}
+
+/* Animation for showing/hiding elements */
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
 }
 
 /* Chat animations */
@@ -187,55 +407,6 @@ button {
 .message-status svg {
   width: 12px;
   height: 12px;
-}
-
-/* Notification styles */
-.notification {
-  animation: slideInNotification 0.3s ease-out;
-  max-width: 320px;
-  word-wrap: break-word;
-}
-
-@keyframes slideInNotification {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* Chat bubble improvements */
-.chat-bubble {
-  position: relative;
-  word-wrap: break-word;
-  hyphens: auto;
-}
-
-.chat-bubble:before {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 0;
-  border-style: solid;
-}
-
-/* Own message bubble tail */
-.chat-bubble.own:before {
-  bottom: 0;
-  right: -8px;
-  border-width: 8px 0 0 8px;
-  border-color: transparent transparent transparent #2563eb;
-}
-
-/* Other message bubble tail */
-.chat-bubble.other:before {
-  bottom: 0;
-  left: -8px;
-  border-width: 8px 8px 0 0;
-  border-color: transparent #e5e7eb transparent transparent;
 }
 
 /* Loading states */

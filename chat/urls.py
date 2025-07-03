@@ -1,6 +1,8 @@
 from django.urls import path, include
+from .users import friends, messages
+from .user_settings import user_profile
 from .auth import auth
-from . import messages, user_profile, views, friends
+from . import views
 from django.views.generic import TemplateView
 
 urlpatterns = [
@@ -32,21 +34,22 @@ urlpatterns = [
     path('websocket-test/', TemplateView.as_view(template_name='websocket_test.html'), name='websocket_test'),
 
     #Main Page URL
-    path('main-menu/', messages.main, name='main_menu'),
+    path('main-menu/', messages.main_menu, name='main_menu'),
 
     #Chat-related URLs
     path('start-chat/', messages.start_chat, name='start_chat'),
+    path('send-message/', messages.send_message, name='send_message'),
     path('get-messages/<int:chat_room_id>/', messages.get_messages, name='get_messages'),
 
     #add new friend URL
     path('add-friend/', friends.add_friend, name='add_friend'),
     path('search-user/', friends.search_user, name='search_user'),
     path('accept-friend-request/', friends.accept_friend_request, name='accept_friend_request'),
+    path('decline-friend-request/', friends.decline_friend_request, name='decline_friend_request'),
     path('get-friends/', friends.get_friends, name='get_friends'),
     path('get-friend-requests/', friends.get_friend_requests, name='get_friend_requests'),
     path('block-friend/', friends.block_friend, name='block_friend'),
     path('remove-friend/', friends.remove_friend, name='remove_friend'),
-    path('search-friend/', friends.search_friend, name='search_friend'),
 
     # Add this to your urlpatterns list
     # path('update-profile/', user_profile.update_profile, name='update_profile'),
