@@ -10,14 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-
 from pathlib import Path
 import os
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -31,12 +29,11 @@ DEBUG = True
 if DEBUG:
     # Add this to your settings
     SITE_DOMAIN = 'http://127.0.0.1:8000'  # Replace with your actual domain
+    ALLOWED_HOSTS = ["*"]
 else:
     SITE_DOMAIN = 'https://imhotepchat.pythonanywhere.com' 
+    ALLOWED_HOSTS = ['127.0.0.1','192.168.100.44', 'https://imhotepchat.pythonanywhere.com', 'imhotepchat.pythonanywhere.com'] 
 
-ALLOWED_HOSTS = ['127.0.0.1','192.168.100.44', 'https://imhotepchat.pythonanywhere.com', 'imhotepchat.pythonanywhere.com'] 
-
-if DEBUG == False:
     # Security settings - keep these as they are
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
@@ -50,7 +47,6 @@ if DEBUG == False:
     SECURE_HSTS_PRELOAD = True
 
 # Application definition
-
 INSTALLED_APPS = [
     'daphne', # Moved daphne to the top as per its requirement because it's for webhooks
     'django.contrib.admin',

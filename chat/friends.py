@@ -9,20 +9,6 @@ from django.views.decorators.http import require_http_methods
 from django.db.models import Q
 import json
 
-#the Main Page route
-@login_required
-def main(request):
-    user_photo_path = get_user_photo(request.user.id)
-    user_latest_chat_rooms = get_user_latest_chat_rooms(request.user.id)
-    
-    context = {
-        'user_photo_path': user_photo_path,
-        'user_latest_chat_rooms': user_latest_chat_rooms,
-        'user': request.user
-    }
-    
-    return render(request, "main_menu.html", context)
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def search_user(request):
@@ -135,17 +121,24 @@ def accept_friend_request(request):
 
 @login_required
 def get_friends(request):
-    """Get user's friends list"""
-    friends = Friendship.get_friends(request.user)
-    friends_list = [
-        {
+    """Get user's friends list with friendship details"""
+    friendships = Friendship.objects.filter(
+        Q(requester=request.user) | Q(addressee=request.user),
+        status__in=['accepted', 'Blocked']
+    )
+    
+    friends_list = []
+    for friendship in friendships:
+        # Get the other user (friend)
+        friend = friendship.addressee if friendship.requester == request.user else friendship.requester
+        friends_list.append({
             'id': friend.id,
             'name': friend.username,
             'email': friend.email,
-            'photo_path': friend.user_photo_path
-        }
-        for friend in friends
-    ]
+            'photo_path': friend.user_photo_path,
+            'friendship_id': friendship.id,
+            'status': friendship.status
+        })
     
     return JsonResponse({'friends': friends_list}, status=200)
 
@@ -170,62 +163,86 @@ def get_friend_requests(request):
 
 @csrf_exempt
 @require_http_methods(["POST"])
-def start_chat(request):
-    """Start or get existing chat room between two users"""
+def block_friend(request):
     try:
         data = json.loads(request.body)
-        user_id = data.get('user_id')
-
-        if not user_id:
-            return JsonResponse({'error': 'User ID is required'}, status=400)
-            
+        friendship_id = data.get('friendship_id')
+        
+        if not friendship_id:
+            return JsonResponse({'error': 'Friendship ID is required'}, status=400)
+        
         try:
-            other_user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return JsonResponse({'error': 'User not found'}, status=404)
+            friendship = Friendship.objects.get(
+                Q(id=friendship_id) & 
+                (Q(requester=request.user) | Q(addressee=request.user)),
+                status__in=['accepted', 'Blocked']
+            )
+        except Friendship.DoesNotExist:
+            return JsonResponse({'error': 'Friendship not found'}, status=404)
+        
+        if friendship.status == 'accepted':
+            friendship.status = 'Blocked'
+            message = 'Friend blocked successfully'
+        elif friendship.status == 'Blocked':
+            friendship.status = 'accepted'
+            message = 'Friend unblocked successfully'
+        else:
+            return JsonResponse({'error': 'Invalid friendship status'}, status=404)
 
-        if request.user == other_user:
-            return JsonResponse({'error': 'Cannot start chat with yourself'}, status=400)
-
-        # Get or create chat room (removed friendship requirement)
-        chat_room, created = ChatRoom.get_or_create_direct_chat(request.user, other_user)
-
+        friendship.save()
+        
+        # Get the other user (friend)
+        other_user = friendship.addressee if friendship.requester == request.user else friendship.requester
+        
         return JsonResponse({
-            'chat_room_id': chat_room.id,
-            'message': 'Chat room created successfully' if created else 'Chat room already exists'
-        }, status=201 if created else 200)
-
+            'message': message,
+            'status': friendship.status,
+            'friend': {
+                'id': other_user.id,
+                'name': other_user.username,
+                'email': other_user.email
+            }
+        }, status=200)
+        
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
-@login_required
-def get_messages(request, chat_room_id):
-    """Get messages for a specific chat room"""
+@csrf_exempt
+@require_http_methods(["POST"])
+def remove_friend(request):
     try:
-        chat_room = ChatRoom.objects.get(id=chat_room_id)
+        data = json.loads(request.body)
+        friendship_id = data.get('friendship_id')
         
-        # Check if user is a participant
-        if not chat_room.participants.filter(id=request.user.id).exists():
-            return JsonResponse({'error': 'Access denied'}, status=403)
+        if not friendship_id:
+            return JsonResponse({'error': 'Friendship ID is required'}, status=400)
         
-        messages = Message.objects.filter(room=chat_room).order_by('timestamp')
+        try:
+            friendship = Friendship.objects.get(
+                Q(id=friendship_id) & 
+                (Q(requester=request.user) | Q(addressee=request.user)),
+                status__in=['accepted', 'Blocked']
+            )
+        except Friendship.DoesNotExist:
+            return JsonResponse({'error': 'Friendship not found'}, status=404)
         
-        messages_data = []
-        for message in messages:
-            messages_data.append({
-                'id': message.id,
-                'content': message.content,
-                'sender_id': message.sender.id,
-                'sender_name': message.sender.username,
-                'timestamp': message.timestamp.isoformat(),
-                'status': message.status
-            })
+        # Get the other user before deleting
+        other_user = friendship.addressee if friendship.requester == request.user else friendship.requester
         
-        return JsonResponse({'messages': messages_data}, status=200)
+        friendship.delete()
         
-    except ChatRoom.DoesNotExist:
-        return JsonResponse({'error': 'Chat room not found'}, status=404)
+        return JsonResponse({
+            'message': 'Friendship removed successfully',
+            'friend': {
+                'id': other_user.id,
+                'name': other_user.username,
+                'email': other_user.email
+            }
+        }, status=200)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
