@@ -46,6 +46,7 @@ urlpatterns = [
     path('get-friend-requests/', friends.get_friend_requests, name='get_friend_requests'),
     path('block-friend/', friends.block_friend, name='block_friend'),
     path('remove-friend/', friends.remove_friend, name='remove_friend'),
+    path('search-friend/', friends.search_friend, name='search_friend'),
 
     # Add this to your urlpatterns list
     # path('update-profile/', user_profile.update_profile, name='update_profile'),

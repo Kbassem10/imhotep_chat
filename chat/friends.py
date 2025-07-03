@@ -246,3 +246,42 @@ def remove_friend(request):
         return JsonResponse({'error': 'Invalid JSON'}, status=400)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def search_friend(request):
+    try:
+        data = json.loads(request.body)
+        user_name = data.get('name', '')
+
+        if not user_name:
+            return JsonResponse({'error': 'Name is required!'}, status=400)
+
+        # Get accepted friendships for the current user
+        friendships = Friendship.objects.filter(
+            Q(requester=request.user) | Q(addressee=request.user),
+            status__in=['accepted', 'Blocked']
+        )
+        
+        # Extract friend user IDs
+        friend_ids = []
+        for friendship in friendships:
+            if friendship.requester == request.user:
+                friend_ids.append(friendship.addressee.id)
+            else:
+                friend_ids.append(friendship.requester.id)
+        
+        # Filter users by name and only include existing friends
+        users = User.objects.filter(
+            username__icontains=user_name,
+            id__in=friend_ids
+        )
+
+        users_list = [{'id': user.id, 'name': user.username, 'email': user.email} for user in users]
+
+        return JsonResponse({'users': users_list}, status=200)
+    
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
